@@ -41,14 +41,42 @@ public class PetStatsComponent : MonoBehaviour
     private Coroutine hungerRoutine;
     private Coroutine happinessRoutine;
     private Coroutine agingRoutine;
+
+    [Header("Cleanliness Decay")]
+    [Tooltip("How many cleanliness points are lost per minute.")]
+    public float cleanlinessDecayPerMinute = 1f;
+    [Tooltip("How often (seconds) to apply decay ticks.")]
+    public float decayTickInterval = 5f;
+
+    [Header("Dirt Particles")]
+    [Tooltip("Particle system to play when pet is dirty. If null the script will try to find a ParticleSystem child.")]
+    public ParticleSystem dirtParticles;
+    [Tooltip("Start showing particles when cleanliness <= this percent (0-100).")]
+    public float dirtParticlesStartPercent = 30f;
+    [Tooltip("Stop showing particles when cleanliness >= this percent (0-100).")]
+    public float dirtParticlesStopPercent = 50f;
+
+    private Coroutine cleanlinessRoutine;
+    private bool dirtPlaying = false;
+    private float lastCleanliness = -1f;
     private void OnEnable()
     {
-        // start the random hunger coroutine for runtime instances
+        // Random hunger coroutine for runtime instances
         hungerRoutine = StartCoroutine(HungerRoutine());
-        // start the random happiness coroutine
+        // Random happiness coroutine
         happinessRoutine = StartCoroutine(HappinessRoutine());
-        // start aging coroutine
+        // Aging coroutine
         agingRoutine = StartCoroutine(AgeRoutine());
+
+        // Cleanliness decay
+        cleanlinessRoutine = StartCoroutine(CleanlinessRoutine());
+
+        // initialize particle visibility immediately
+        if (stats != null)
+        {
+            lastCleanliness = stats.petCleanliness;
+            HandleDirtParticles();
+        }
     }
 
     private void OnDisable()
@@ -56,9 +84,37 @@ public class PetStatsComponent : MonoBehaviour
         if (hungerRoutine != null) StopCoroutine(hungerRoutine);
         if (happinessRoutine != null) StopCoroutine(happinessRoutine);
         if (agingRoutine != null) StopCoroutine(agingRoutine);
+        if (cleanlinessRoutine != null) StopCoroutine(cleanlinessRoutine);
+    }
+    private void Update()
+    {
+        // React immediately to cleanliness changes made elsewhere
+        if (stats != null)
+        {
+            if (Mathf.Abs(stats.petCleanliness - lastCleanliness) > 0.0001f)
+            {
+                lastCleanliness = stats.petCleanliness;
+                HandleDirtParticles();
+                if (PetTracker.Instance != null)
+                    PetTracker.Instance.RegisterCurrentPet(this);
+            }
+        }
     }
 
-    // Public API: pause automatic tick coroutines for a number of real-time seconds
+    private void OnValidate()
+    {
+        dirtParticlesStartPercent = Mathf.Clamp(dirtParticlesStartPercent, 0f, 100f);
+        dirtParticlesStopPercent = Mathf.Clamp(dirtParticlesStopPercent, 0f, 100f);
+        if (dirtParticlesStartPercent > dirtParticlesStopPercent)
+        {
+
+            float t = dirtParticlesStartPercent;
+            dirtParticlesStartPercent = dirtParticlesStopPercent;
+            dirtParticlesStopPercent = t;
+        }
+    }
+
+    // Pause automatic tick coroutines for a number of real-time seconds
     public void PauseForSeconds(float seconds)
     {
         pauseEndTime = Mathf.Max(pauseEndTime, Time.time + Mathf.Max(0f, seconds));
@@ -107,6 +163,59 @@ public class PetStatsComponent : MonoBehaviour
             Debug.Log($"[PetStatsComponent] Happiness decreased by {decrease:F1}, now {stats.petHappiness:F1}");
         }
     }
+    private IEnumerator CleanlinessRoutine()
+    {
+        while (true)
+        {
+            while (Time.time < pauseEndTime)
+                yield return null;
+
+            yield return new WaitForSeconds(Mathf.Max(0.1f, decayTickInterval));
+
+            if (Time.time < pauseEndTime) continue;
+            if (stats == null) continue;
+
+            // apply decay
+            float perSecond = cleanlinessDecayPerMinute / 60f;
+            float delta = perSecond * decayTickInterval;
+            stats.petCleanliness = Mathf.Clamp(stats.petCleanliness - delta, 0f, 100f);
+
+            Debug.Log($"[PetStatsComponent] Cleanliness decayed by {delta:F2}, now {stats.petCleanliness:F1}");
+
+            // notify tracker/UI
+            if (PetTracker.Instance != null)
+                PetTracker.Instance.RegisterCurrentPet(this);
+
+            HandleDirtParticles();
+        }
+    }
+
+    private void HandleDirtParticles()
+    {
+        if (dirtParticles == null)
+            dirtParticles = GetComponentInChildren<ParticleSystem>();
+
+        if (dirtParticles == null) return;
+
+        // prefer toggling emission and GameObject to fully hide/show particles
+        var emission = dirtParticles.emission;
+
+        if (!dirtPlaying && stats.petCleanliness <= dirtParticlesStartPercent)
+        {
+            dirtParticles.gameObject.SetActive(true);
+            emission.enabled = true;
+            if (!dirtParticles.isPlaying) dirtParticles.Play();
+            dirtPlaying = true;
+        }
+        else if (dirtPlaying && stats.petCleanliness >= dirtParticlesStopPercent)
+        {
+            // stop emitting and hide the particle object
+            emission.enabled = false;
+            dirtParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            dirtParticles.gameObject.SetActive(false);
+            dirtPlaying = false;
+        }
+    }
 
     public void ApplySleepAgeBoost(float percent)
     {
@@ -120,6 +229,7 @@ public class PetStatsComponent : MonoBehaviour
             PetTracker.Instance.SavePetStats(stats);
         }
     }
+
     private IEnumerator AgeRoutine()
     {
         if (stats == null) yield break;
