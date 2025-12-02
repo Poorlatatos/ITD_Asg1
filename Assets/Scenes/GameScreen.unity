@@ -1166,12 +1166,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoursToSkip: 8
-  pauseDuration: 4
+  pauseDuration: 2
   minPercent: 10
   maxPercent: 20
   autoSaveAfterSkip: 1
   skipImage: {fileID: 722572533}
-  imageDisplaySeconds: 4
+  imageDisplaySeconds: 2
 --- !u!1 &1075000274
 GameObject:
   m_ObjectHideFlags: 0
