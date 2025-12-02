@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "622140153442",
+    "firebase_url": "https://ddaxitd-dee22-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ddaxitd-dee22",
+    "storage_bucket": "ddaxitd-dee22.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622140153442:android:57da3028a2b1a855623b3b",
+        "android_client_info": {
+          "package_name": "com.np.Doh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwKBTFSHrrBE0qicOlxRBYYENszu-IK-Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
