@@ -19,7 +19,7 @@ public class Login : MonoBehaviour
     [SerializeField] public TextMeshProUGUI messageText;
 
     public string nextSceneName;
-
+    public bool requireUsernameMatch = true;
     private FirebaseAuth auth;
     private FirebaseUser user;
     private DatabaseReference db;
@@ -101,6 +101,8 @@ public class Login : MonoBehaviour
         string username = usernameField ? usernameField.text.Trim() : "";
         string email = emailField ? emailField.text.Trim() : "";
         string pass = passwordField ? passwordField.text : "";
+
+        Debug.Log($"OnLoginButtonPressed: username='{username}', email='{email}', passLen={(pass?.Length ?? 0)}");
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
         {
@@ -240,19 +242,31 @@ public class Login : MonoBehaviour
                 return;
             }
 
-            // ensure the account's displayName matches provided username
-            var registeredName = signedInUser.DisplayName ?? "";
-            if (!string.Equals(registeredName, username, StringComparison.Ordinal))
+            Debug.Log($"SignIn success: uid={signedInUser.UserId} displayName='{signedInUser.DisplayName}'");
+
+            // ensure the account's displayName matches provided username if required
+            if (requireUsernameMatch)
             {
-                // mismatch -> sign out and report error
-                try { auth.SignOut(); } catch { }
-                LogMsg("Username does not match account. Please check username/email.");
-                return;
+                var registeredName = signedInUser.DisplayName ?? "";
+                if (!string.Equals(registeredName, username, StringComparison.Ordinal))
+                {
+                    try { auth.SignOut(); } catch { }
+                    LogMsg("Username does not match account. Please check username/email.");
+                    return;
+                }
             }
 
             user = signedInUser;
             LogMsg("Login successful");
-            // OnAuthStateChanged will handle scene load if requested
+
+            // fallback: immediately load next scene if configured (useful if auth.StateChanged didn't fire)
+            if (!string.IsNullOrEmpty(nextSceneName))
+            {
+                Debug.Log($"Loading scene '{nextSceneName}' after sign in.");
+                SceneManager.LoadScene(nextSceneName);
+                signInRequested = false;
+            }
+            // OnAuthStateChanged will still handle scene load if you rely on the auth state event
         }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 

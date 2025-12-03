@@ -55,13 +55,15 @@
     <Compile Include="Assets\Scripts\FeedButton.cs" />
     <Compile Include="Assets\Scripts\PetStatsComponent.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\GoalManager.cs" />
+    <Compile Include="Assets\Scripts\DebugMenuButtons.cs" />
     <Compile Include="Assets\Scripts\TimeSkip.cs" />
     <Compile Include="Assets\Scripts\FloatingBar.cs" />
     <Compile Include="Assets\Settings\Project Configuration\SceneTemplate_RotateCube.cs" />
     <Compile Include="Assets\Scripts\PetTracker.cs" />
     <Compile Include="Assets\Scripts\SaveButton.cs" />
+    <Compile Include="Assets\Scripts\DebugMenu.cs" />
+    <Compile Include="Assets\Scripts\PetExpressionController.cs" />
     <Compile Include="Assets\Scripts\Cleaning.cs" />
-    <Compile Include="Assets\Scripts\DatabaseController.cs" />
     <Compile Include="Assets\Scripts\ImageTracker.cs" />
     <Compile Include="Assets\Scripts\Menu.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\ARPlaneMeshVisualizerFader.cs" />

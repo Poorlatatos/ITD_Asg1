@@ -256,13 +256,37 @@ public class PetStatsComponent : MonoBehaviour
             if (Time.time < pauseEndTime) continue;
             if (stats == null) yield break;
 
-            stats.petAge = stats.petAge + 1;
-            Debug.Log($"[PetStatsComponent] Pet aged to {stats.petAge} (boosted={boosted}, accel={ageAccelerationPercent}%)");
-
-            if (autoSaveOnAge && PetTracker.Instance != null)
+            // If any tracked stat is zero, reverse aging until age reaches 0.
+            bool anyStatZero = stats.petHappiness <= 0f || stats.petHunger <= 0f || stats.petCleanliness <= 0f;
+            if (anyStatZero)
             {
-                PetTracker.Instance.SavePetStats(stats);
-                Debug.Log("[PetStatsComponent] Auto-saved pet stats after aging.");
+                if (stats.petAge > 0)
+                {
+                    stats.petAge = Mathf.Max(0, stats.petAge - 1);
+                    Debug.Log($"[PetStatsComponent] Reverse aging: age decreased to {stats.petAge} due to a stat at zero.");
+
+                    if (autoSaveOnAge && PetTracker.Instance != null)
+                    {
+                        PetTracker.Instance.SavePetStats(stats);
+                        Debug.Log("[PetStatsComponent] Auto-saved pet stats after reverse aging.");
+                    }
+                }
+                else
+                {
+                    // When age is already 0, it'll do nothing 
+                }
+            }
+            else
+            {
+                // Normal forward aging
+                stats.petAge = stats.petAge + 1;
+                Debug.Log($"[PetStatsComponent] Pet aged to {stats.petAge} (boosted={boosted}, accel={ageAccelerationPercent}%)");
+
+                if (autoSaveOnAge && PetTracker.Instance != null)
+                {
+                    PetTracker.Instance.SavePetStats(stats);
+                    Debug.Log("[PetStatsComponent] Auto-saved pet stats after aging.");
+                }
             }
         }
     }

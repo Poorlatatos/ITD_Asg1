@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class TimeSkip : MonoBehaviour
 {
@@ -15,11 +16,46 @@ public class TimeSkip : MonoBehaviour
     public Image skipImage;
     public float imageDisplaySeconds = 2f;
 
-    private Coroutine imageCoroutine;
+    [Header("Cooldown")]
+    [Tooltip("Minutes the player must wait between time skips.")]
+    public float cooldownMinutes = 60f;
+    [Tooltip("Optional Button to disable while on cooldown.")]
+    public Button skipButton;
+    [Tooltip("Text shown when the skip is on cooldown (will auto-hide).")]
+    public TextMeshProUGUI cooldownMessageText;
+    [Tooltip("How long the cooldown message is visible (seconds).")]
+    public float cooldownMessageSeconds = 3f;
 
-    // Hook this method to your UI Button OnClick()
+    private Coroutine imageCoroutine;
+    private Coroutine cooldownCoroutine;
+    private float lastUseTime = -Mathf.Infinity;
+
+    private void Awake()
+    {
+        // ensure skipImage is hidden at start
+        if (skipImage != null) skipImage.gameObject.SetActive(false);
+        if (cooldownMessageText != null) cooldownMessageText.gameObject.SetActive(false);
+        if (skipButton == null)
+            skipButton = GetComponent<Button>(); // try to auto-find
+    }
     public void OnTimeSkipButtonPressed()
     {
+        // check cooldown
+        float cooldownSeconds = cooldownMinutes * 60f;
+        float nextAvailable = lastUseTime + cooldownSeconds;
+        if (Time.time < nextAvailable)
+        {
+            float remaining = nextAvailable - Time.time;
+            ShowCooldownMessage(remaining);
+            return;
+        }
+
+        // mark use and start cooldown
+        lastUseTime = Time.time;
+        if (skipButton != null) skipButton.interactable = false;
+        if (cooldownCoroutine != null) StopCoroutine(cooldownCoroutine);
+        cooldownCoroutine = StartCoroutine(CooldownCoroutine(cooldownSeconds));
+
         // Shows the image
         if (skipImage != null)
         {
@@ -81,9 +117,37 @@ public class TimeSkip : MonoBehaviour
 
         yield return new WaitForSeconds(pauseDuration);
     }
-    private void Awake()
+
+    private IEnumerator CooldownCoroutine(float seconds)
     {
-        // ensure skipImage is hidden at start
-        if (skipImage != null) skipImage.gameObject.SetActive(false);
+        float end = Time.time + seconds;
+        while (Time.time < end)
+        {
+            yield return null;
+        }
+        if (skipButton != null) skipButton.interactable = true;
+        cooldownCoroutine = null;
+    }
+
+    private void ShowCooldownMessage(float remainingSeconds)
+    {
+        if (cooldownMessageText == null)
+            return;
+
+        int minutes = Mathf.FloorToInt(remainingSeconds / 60f);
+        int seconds = Mathf.CeilToInt(remainingSeconds % 60f);
+        string timeStr = minutes > 0 ? $"{minutes}m {seconds}s" : $"{seconds}s";
+        cooldownMessageText.text = $"Time Skip available in {timeStr}";
+        cooldownMessageText.gameObject.SetActive(true);
+
+        // start hide coroutine
+        StartCoroutine(HideCooldownMessageAfterDelay(cooldownMessageSeconds));
+    }
+
+    private IEnumerator HideCooldownMessageAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (cooldownMessageText != null)
+            cooldownMessageText.gameObject.SetActive(false);
     }
 }
