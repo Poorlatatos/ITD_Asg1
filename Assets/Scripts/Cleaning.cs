@@ -158,9 +158,12 @@ public class Cleaning : MonoBehaviour
     {
         cleaningEnabled = !cleaningEnabled;
 
-        if (!cleaningEnabled)
+        if (cleaningEnabled)
+        {   
+            ShowBrush();
+        }
+        else
         {
-            // stop any in-progress cleaning
             pointerDown = false;
             lastWorldValid = false;
             HideBrush();
@@ -170,6 +173,7 @@ public class Cleaning : MonoBehaviour
     public void StartCleaning()
     {
         cleaningEnabled = true;
+        ShowBrush();
     }
 
     public void StopCleaning()
