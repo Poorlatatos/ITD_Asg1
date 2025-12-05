@@ -140,7 +140,6 @@ public class TimeSkip : MonoBehaviour
         cooldownMessageText.text = $"Time Skip available in {timeStr}";
         cooldownMessageText.gameObject.SetActive(true);
 
-        // start hide coroutine
         StartCoroutine(HideCooldownMessageAfterDelay(cooldownMessageSeconds));
     }
 

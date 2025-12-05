@@ -288,6 +288,11 @@ MonoBehaviour:
   - {fileID: 599338920204867255, guid: 908c58b192908e945a80c2a76bba920e, type: 3}
   keepPetLoadedWhenLost: 1
   autoSaveOnLost: 1
+  jumpSFX:
+  - {fileID: 8300000, guid: e139235918e33204e83e2c299b478b24, type: 3}
+  - {fileID: 8300000, guid: f7574e83927d21f4685e0244f01e9626, type: 3}
+  - {fileID: 8300000, guid: d18e6b0a156da91479b876b85d045647, type: 3}
+  jumpSFXVolume: 0.5
 --- !u!114 &151853177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1038,7 +1043,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &652532499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1241,7 +1246,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 720ae9f6b938c3f4c990ebb7249e5598, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

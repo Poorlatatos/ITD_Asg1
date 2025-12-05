@@ -20,6 +20,14 @@ public class ImageTracker : MonoBehaviour
     [SerializeField]
     private bool autoSaveOnLost = true;
 
+    [Header("Jump SFX")]
+    [Tooltip("List of sound effects to pick one from when the pet jumps and happiness increases.")]
+    [SerializeField]
+    private AudioClip[] jumpSFX;
+    [Range(0f,1f)]
+    [SerializeField]
+    private float jumpSFXVolume = 1f;
+
     private Dictionary<string, GameObject> spawnedPrefabs = new Dictionary<string, GameObject>();
 
     private Dictionary<GameObject, GameObject> spawnedObjects = new Dictionary<GameObject, GameObject>();
@@ -188,7 +196,6 @@ public class ImageTracker : MonoBehaviour
         }
     }
 
-    // New: coroutine that moves the object up and back down (localPosition)
     private IEnumerator Jump(Transform target)
     {
         if (target == null) yield break;
@@ -212,12 +219,37 @@ public class ImageTracker : MonoBehaviour
 
         target.localPosition = start;
 
-        // Increase pet happiness if the prefab has a PetStats component (clamped to 100)
+        // Increase pet happiness if the prefab has a PetStats component
         var petComp = target.GetComponentInChildren<PetStatsComponent>();
         if (petComp != null && petComp.stats != null)
         {
-            petComp.stats.petHappiness = Mathf.Min(100f, petComp.stats.petHappiness + 5f);
+            float prevHappiness = petComp.stats.petHappiness;
+            float newHappiness = Mathf.Min(100f, prevHappiness + 5f);
+            petComp.stats.petHappiness = newHappiness;
             Debug.Log($"Pet happiness increased to {petComp.stats.petHappiness}");
+
+            // Play a single random SFX from the list when happiness actually increases
+            if (newHappiness > prevHappiness && jumpSFX != null && jumpSFX.Length > 0)
+            {
+                AudioClip clip = null;
+                // choose a random non-null clip
+                for (int attempts = 0; attempts < 4; attempts++)
+                {
+                    var candidate = jumpSFX[UnityEngine.Random.Range(0, jumpSFX.Length)];
+                    if (candidate != null) { clip = candidate; break; }
+                }
+                // fallback to first non-null if above failed
+                if (clip == null)
+                {
+                    foreach (var c in jumpSFX) { if (c != null) { clip = c; break; } }
+                }
+
+                if (clip != null)
+                {
+                    // play at the pet's world position as a one-shot
+                    AudioSource.PlayClipAtPoint(clip, target.position, jumpSFXVolume);
+                }
+            }
         }
 
         jumpingObjects.Remove(target);
