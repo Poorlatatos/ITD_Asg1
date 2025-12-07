@@ -1,16 +1,22 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
 
 public class Menu : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public Image panel;
+    public Button openPanelButton;
+    public bool isPanelOpen = false;
+
+    private void Start()
     {
-        
+        openPanelButton.onClick.AddListener(OpenPanel);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OpenPanel()
     {
-        
+        panel.gameObject.SetActive(true);
+        isPanelOpen = true;
     }
 }
