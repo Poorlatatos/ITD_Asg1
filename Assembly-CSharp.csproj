@@ -60,7 +60,6 @@
     <Compile Include="Assets\Scripts\FloatingBar.cs" />
     <Compile Include="Assets\Settings\Project Configuration\SceneTemplate_RotateCube.cs" />
     <Compile Include="Assets\Scripts\PetTracker.cs" />
-    <Compile Include="Assets\Scripts\SaveButton.cs" />
     <Compile Include="Assets\Scripts\DebugMenu.cs" />
     <Compile Include="Assets\Scripts\PetExpressionController.cs" />
     <Compile Include="Assets\Scripts\Cleaning.cs" />
