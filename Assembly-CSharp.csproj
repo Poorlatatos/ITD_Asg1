@@ -55,6 +55,7 @@
     <Compile Include="Assets\Scripts\FeedButton.cs" />
     <Compile Include="Assets\Scripts\PetStatsComponent.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\GoalManager.cs" />
+    <Compile Include="Assets\Scripts\UserSettings.cs" />
     <Compile Include="Assets\Scripts\DebugMenuButtons.cs" />
     <Compile Include="Assets\Scripts\TimeSkip.cs" />
     <Compile Include="Assets\Scripts\FloatingBar.cs" />

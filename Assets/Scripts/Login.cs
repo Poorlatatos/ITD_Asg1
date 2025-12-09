@@ -189,10 +189,11 @@ public class Login : MonoBehaviour
                         Debug.LogWarning("Failed to set display name: " + updateTask.Exception?.Flatten().Message);
                     }
 
-                    // write a simple record under /users/{username}
-                    db.Child("users").Child(username).Child("uid").SetValueAsync(newUser.UserId);
-                    db.Child("users").Child(username).Child("email").SetValueAsync(email);
-
+                    // store users by their UID
+                    var uidKey = newUser.UserId;
+                    db.Child("users").Child(uidKey).Child("username").SetValueAsync(username);
+                    db.Child("users").Child(uidKey).Child("email").SetValueAsync(email);
+                    db.Child("users").Child(uidKey).Child("uid").SetValueAsync(uidKey);
                     // sign out so user must explicitly login
                     try { auth.SignOut(); } catch (Exception ex) { Debug.LogWarning("SignOut after register failed: " + ex.Message); }
 
