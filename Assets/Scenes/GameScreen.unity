@@ -187,6 +187,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 576d45119d32a5045882a72c1954e00c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  remoteGameSettings:
+    minHungerInterval: 10
+    maxHungerInterval: 30
+    minHungerDecrease: 1
+    maxHungerDecrease: 5
+    minHappinessInterval: 15
+    maxHappinessInterval: 45
+    minHappinessDecrease: 1
+    maxHappinessDecrease: 4
 --- !u!1 &193451316
 GameObject:
   m_ObjectHideFlags: 0
