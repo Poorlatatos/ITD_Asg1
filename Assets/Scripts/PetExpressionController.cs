@@ -1,5 +1,11 @@
 using UnityEngine;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Controls pet expressions based on their stats.
+/// Date : 3 December 2025
+/// </summary>
+
 public class PetExpressionController : MonoBehaviour
 {
     public PetStatsComponent petStatsComponent;

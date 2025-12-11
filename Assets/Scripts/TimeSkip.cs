@@ -3,6 +3,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Allows the player to "skip time", reducing pet stats accordingly and giving them a temporary age boost.
+/// Date : 26 November 2025
+/// </summary>
+
 public class TimeSkip : MonoBehaviour
 {
     [Header("Skip Settings")]

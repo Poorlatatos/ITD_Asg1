@@ -8,6 +8,12 @@ using Firebase.Auth;
 using Firebase.Database;
 using TMPro;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Manages user login and registration using Firebase Authentication and Realtime Database.
+/// Date : 10 November 2025
+/// </summary>
+
 public class Login : MonoBehaviour
 {
     public static Login Instance { get; private set; }

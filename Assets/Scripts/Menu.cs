@@ -2,6 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Manages the main menu panel functionality.
+/// Date : 18 November 2025
+/// </summary>
 
 public class Menu : MonoBehaviour
 {

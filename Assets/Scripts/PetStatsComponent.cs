@@ -1,6 +1,12 @@
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Component managing pet stats over time, including hunger, happiness, cleanliness, and aging.
+/// Date : 26 November 2025
+/// </summary>
+
 public class PetStatsComponent : MonoBehaviour
 {
     public PetStats stats = new PetStats

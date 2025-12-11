@@ -7,8 +7,11 @@ using Firebase.Auth;
 using Firebase.Database;
 
 /// <summary>
-/// 
+/// Name : Jaasper Lee
+/// Description : Manages user settings, including loading/saving to Firebase and local cache.
+/// Date : 5 December 2025
 /// </summary>
+
 [Serializable]
 public class UserPrefs
 {
@@ -139,33 +142,26 @@ public class UserSettings : MonoBehaviour
         }
     }
 
-    public void LoadFromFirebase()
+    public async void LoadFromFirebase()
     {
         var db = FirebaseDatabase.DefaultInstance;
         var auth = FirebaseAuth.DefaultInstance;
         if (db == null || auth == null || auth.CurrentUser == null)
         {
+            Debug.Log("[UserSettings] DB/auth not ready -> loading local settings.");
             LoadFromLocal();
             return;
         }
 
         string uid = GetUidOrGuest(auth);
-        db.RootReference.Child("users").Child(uid).Child("settings").GetValueAsync().ContinueWith(task =>
-        {
-            if (task.IsFaulted || task.IsCanceled)
-            {
-                Debug.LogWarning("[UserSettings] Load failed: " + task.Exception);
-                // fallback to local
-                SetFeedbackOnMainThread("Loaded local settings.");
-                LoadFromLocal();
-                return;
-            }
+        Debug.Log($"[UserSettings] Starting remote load for uid={uid}");
 
-            var snapshot = task.Result;
+        try
+        {
+            var snapshot = await db.RootReference.Child("users").Child(uid).Child("settings").GetValueAsync();
             if (snapshot == null || !snapshot.Exists)
             {
-                Debug.Log("[UserSettings] No remote settings saved; using local.");
-                SetFeedbackOnMainThread("Using local settings.");
+                Debug.Log("[UserSettings] No remote settings found; using local.");
                 LoadFromLocal();
                 return;
             }
@@ -173,21 +169,25 @@ public class UserSettings : MonoBehaviour
             string raw = snapshot.GetRawJsonValue();
             if (string.IsNullOrEmpty(raw))
             {
-                Debug.Log("[UserSettings] Empty remote settings; using local.");
+                Debug.Log("[UserSettings] Remote settings empty; using local.");
                 LoadFromLocal();
                 return;
             }
 
-            // apply loaded settings on main thread
             UnityMainThreadApply(raw);
-        });
+            Debug.Log("[UserSettings] Remote settings applied.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[UserSettings] Remote load failed: " + e);
+            LoadFromLocal();
+        }
     }
 
     // helper to apply loaded JSON on main thread (continue on Unity context)
     private void UnityMainThreadApply(string rawJson)
     {
         // If called from Firebase thread, schedule on main thread using TaskScheduler
-        // simplest approach: use FromJsonOverwrite and then set sliders
         try
         {
             JsonUtility.FromJsonOverwrite(rawJson, prefs);

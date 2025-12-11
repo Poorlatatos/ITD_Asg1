@@ -4,7 +4,11 @@ using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
-
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Tracks images in AR and spawns associated prefabs, with options to keep pets loaded and play jump SFX.
+/// Date : 18 November 2025
+/// </summary>
 public class ImageTracker : MonoBehaviour
 {
     [SerializeField]
