@@ -1,5 +1,11 @@
 using UnityEngine;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Script to toggle a debug menu canvas with keybinds.
+/// Date : 28 November 2025
+/// </summary>
+
 public class DebugMenu : MonoBehaviour
 {
     [Header("Debug Canvas")]
@@ -18,7 +24,7 @@ public class DebugMenu : MonoBehaviour
     {
         if (debugCanvas == null)
         {
-            // try to auto-find a canvas tagged "DebugCanvas"
+
             debugCanvas = GameObject.FindWithTag("DebugCanvas");
         }
 

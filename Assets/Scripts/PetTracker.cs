@@ -5,6 +5,12 @@ using Firebase.Database;
 using Firebase.Auth;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Script to track the current pet and load/save its stats, including remote game settings.
+/// Date : 12 November 2025
+/// </summary>
+
 [Serializable]
 public class GameSettings
 {
@@ -34,6 +40,7 @@ public class PetTracker : MonoBehaviour
     private DatabaseReference db;
     private DatabaseReference gameSettingsRef;
 
+    /// Singleton initialization and Firebase setup.
     private void Awake()
     {
         if (Instance == null)
@@ -84,6 +91,7 @@ public class PetTracker : MonoBehaviour
             ApplyGameSettingsTo(CurrentPet);
     }
 
+    /// Saves the provided pet stats to the remote database for the current user.
     public void SavePetStats(PetStats stats)
     {
         if (stats == null) { Debug.LogError("No stats provided to save."); return; }
@@ -98,7 +106,9 @@ public class PetTracker : MonoBehaviour
         });
     }
 
-    public void LoadPetStatsFor(PetStatsComponent instance)
+
+    /// Loads pet stats from remote DB and applies them to the provided instance.
+    public void LoadPetStatsFor(PetStatsComponent instance) 
     {
         if (instance == null || db == null) { Debug.LogWarning("LoadPetStatsFor: missing instance or DB"); return; }
 
@@ -130,6 +140,7 @@ public class PetTracker : MonoBehaviour
         });
     }
 
+    /// Called when a new scene is loaded; looks for a PetStatsComponent to load stats into.
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         var petComp = FindFirstObjectByType<PetStatsComponent>();
@@ -148,8 +159,7 @@ public class PetTracker : MonoBehaviour
         return "guest_" + SystemInfo.deviceUniqueIdentifier;
     }
 
-    // -- Remote gameSettings subscription and application --
-
+    /// Remote gameSettings subscription and application
     private void SubscribeGameSettings()
     {
         if (db == null) { Debug.Log("[PetTracker] DB not initialized - cannot subscribe to gameSettings."); return; }
@@ -157,7 +167,6 @@ public class PetTracker : MonoBehaviour
         gameSettingsRef = db.Child("gameSettings");
         gameSettingsRef.ValueChanged += OnGameSettingsChanged;
 
-        // initial load
         gameSettingsRef.GetValueAsync().ContinueWith(t =>
         {
             if (t.IsFaulted || t.IsCanceled) return;
@@ -166,6 +175,7 @@ public class PetTracker : MonoBehaviour
         });
     }
 
+    /// Unsubscribes from remote gameSettings updates.
     private void UnsubscribeGameSettings()
     {
         if (gameSettingsRef != null)
@@ -175,6 +185,7 @@ public class PetTracker : MonoBehaviour
         }
     }
 
+    /// Called when remote gameSettings change.
     private void OnGameSettingsChanged(object sender, ValueChangedEventArgs args)
     {
         if (args.DatabaseError != null) { Debug.LogWarning("[PetTracker] gameSettings ValueChanged error: " + args.DatabaseError.Message); return; }
@@ -183,6 +194,7 @@ public class PetTracker : MonoBehaviour
         Enqueue(() => ApplyRawSettingsJson(snap.GetRawJsonValue()));
     }
 
+    /// Applies raw JSON string to remote game settings.
     private void ApplyRawSettingsJson(string raw)
     {
         if (string.IsNullOrEmpty(raw)) { Debug.Log("[PetTracker] empty gameSettings JSON"); return; }
@@ -199,6 +211,7 @@ public class PetTracker : MonoBehaviour
         }
     }
 
+    /// Applies loaded game settings to the provided pet instance.
     private void ApplyGameSettingsTo(PetStatsComponent pet)
     {
         if (pet == null || !gameSettingsLoaded) return;

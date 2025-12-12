@@ -1,5 +1,11 @@
 using UnityEngine;
 
+/// <summary>
+/// Name : Jaasper Lee
+/// Description : Script to provide debug menu buttons to set pet stats quickly.
+/// Date : 27 November 2025
+/// </summary>
+
 public class DebugMenuButtons : MonoBehaviour
 {
     private PetStatsComponent FindActivePet()
@@ -10,7 +16,7 @@ public class DebugMenuButtons : MonoBehaviour
         return UnityEngine.Object.FindFirstObjectByType<PetStatsComponent>();
     }
 
-    // Set all tracked stats to 50%
+    /// Set all tracked stats to 50%.
     public void SetStatsHalf()
     {
         var pet = FindActivePet();
@@ -30,7 +36,7 @@ public class DebugMenuButtons : MonoBehaviour
         Debug.Log("DebugMenuButtons: set pet stats to half (50%).");
     }
 
-    // Set all tracked stats to 100%
+    /// Set all tracked stats to 100%.
     public void SetStatsFull()
     {
         var pet = FindActivePet();
@@ -50,7 +56,7 @@ public class DebugMenuButtons : MonoBehaviour
         Debug.Log("DebugMenuButtons: set pet stats to full (100%).");
     }
 
-    // Set all tracked stats to zero
+    /// Set all tracked stats to zero.
     public void SetStatsZero()
     {
         var pet = FindActivePet();

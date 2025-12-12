@@ -32,13 +32,12 @@ public class UserSettings : MonoBehaviour
     private UserPrefs prefs = new UserPrefs();
     private Coroutine debounceCoroutine;
 
+    /// Hooks slider change callbacks and loads cached local preferences.
     private void Awake()
     {
-        // Hook sliders
         if (bgmSlider != null) bgmSlider.onValueChanged.AddListener(OnBgmChanged);
         if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(OnSfxChanged);
 
-        // Load cached local prefs immediately so UI is responsive
         LoadFromLocal();
     }
     private void ClearFeedback()
@@ -46,11 +45,11 @@ public class UserSettings : MonoBehaviour
         if (feedbackText != null)
             feedbackText.text = "";
     }
+    /// Register auth state listener and attempt to load settings for current user.
     private void OnEnable()
     {
         var auth = FirebaseAuth.DefaultInstance;
         if (auth != null) auth.StateChanged += OnAuthStateChanged;
-        // If already signed in, attempt load from Firebase
         TryLoadForCurrentUser();
     }
 
@@ -97,7 +96,7 @@ public class UserSettings : MonoBehaviour
         var db = FirebaseDatabase.DefaultInstance;
         var auth = FirebaseAuth.DefaultInstance;
 
-        // Always cache locally first
+        
         PlayerPrefs.SetFloat("prefs.bgmVolume", prefs.bgmVolume);
         PlayerPrefs.SetFloat("prefs.sfxVolume", prefs.sfxVolume);
         PlayerPrefs.Save();
@@ -128,6 +127,7 @@ public class UserSettings : MonoBehaviour
             }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
+    /// Loads settings from Firebase if signed in, otherwise loads local settings.
     public void TryLoadForCurrentUser()
     {
         var auth = FirebaseAuth.DefaultInstance;
@@ -137,7 +137,6 @@ public class UserSettings : MonoBehaviour
         }
         else
         {
-            // not signed in -> use local
             LoadFromLocal();
         }
     }
@@ -184,10 +183,9 @@ public class UserSettings : MonoBehaviour
         }
     }
 
-    // helper to apply loaded JSON on main thread (continue on Unity context)
+    /// Applies JSON settings on the main thread and updates UI and local cache.
     private void UnityMainThreadApply(string rawJson)
     {
-        // If called from Firebase thread, schedule on main thread using TaskScheduler
         try
         {
             JsonUtility.FromJsonOverwrite(rawJson, prefs);
@@ -199,11 +197,9 @@ public class UserSettings : MonoBehaviour
             return;
         }
 
-        // apply to UI
         if (bgmSlider != null) bgmSlider.SetValueWithoutNotify(prefs.bgmVolume);
         if (sfxSlider != null) sfxSlider.SetValueWithoutNotify(prefs.sfxVolume);
 
-        // cache locally
         PlayerPrefs.SetFloat("prefs.bgmVolume", prefs.bgmVolume);
         PlayerPrefs.SetFloat("prefs.sfxVolume", prefs.sfxVolume);
         PlayerPrefs.Save();
@@ -230,7 +226,6 @@ public class UserSettings : MonoBehaviour
         return "guest_" + SystemInfo.deviceUniqueIdentifier;
     }
 
-    // UI feedback helpers
     private void SetFeedback(string msg)
     {
         if (feedbackText != null)
@@ -241,10 +236,9 @@ public class UserSettings : MonoBehaviour
         }
     }
 
+    /// Schedules a feedback message to be set on the main thread next frame.
     private void SetFeedbackOnMainThread(string msg)
     {
-        // Called from background thread continuations; schedule on main thread
-        // Use Unity's synchronization by posting via coroutine
         StartCoroutine(SetFeedbackNextFrame(msg));
     }
 

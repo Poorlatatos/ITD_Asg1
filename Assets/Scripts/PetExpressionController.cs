@@ -14,15 +14,22 @@ public class PetExpressionController : MonoBehaviour
     public GameObject hungryExpression;
     public GameObject dirtyExpression;
     public GameObject deadExpression;
+    public GameObject happyExpressionCake;
+    public GameObject sadExpressionCake;
+    public GameObject hungryExpressionCake;
+    public GameObject dirtyExpressionCake;
+    public GameObject deadExpressionCake;
     private GameObject currentExpression;
 
     private void Start()
     {
+    /// Calls UpdateExpression once on start to initialize current expression.
         UpdateExpression();
     }
 
     private void Update()
     {
+    /// Calls UpdateExpression every frame to refresh the expression according to stats.
         UpdateExpression();
     }
 
@@ -33,31 +40,49 @@ public class PetExpressionController : MonoBehaviour
         var stats = petStatsComponent.stats;
         GameObject newExpression = null;
 
-        // Dead state overrides everything: show only when all tracked stats are zero
         if (stats.petHappiness <= 0f && stats.petHunger <= 0f && stats.petCleanliness <= 0f)
         {
             newExpression = deadExpression;
         }
-        else if (stats.petHappiness < 30f)
+        else if (stats.petHappiness < 30f && stats.petAge < 3f)
         {
             newExpression = sadExpression;
         }
-        else if (stats.petHunger < 30f)
+        else if (stats.petHunger < 30f && stats.petAge < 3f)
         {
             newExpression = hungryExpression;
         }
-        else if (stats.petCleanliness < 30f)
+        else if (stats.petCleanliness < 30f && stats.petAge < 3f)
         {
             newExpression = dirtyExpression;
         }
-        else
+        else if (stats.petHappiness <= 0f && stats.petHunger <= 0f && stats.petCleanliness <= 0f && stats.petAge >= 3f)
+        {
+            newExpression = deadExpressionCake;
+        }
+        else if (stats.petHappiness < 30f && stats.petAge >= 3f)
+        {
+            newExpression = sadExpressionCake;
+        }
+        else if (stats.petHunger < 30f && stats.petAge >= 3f)
+        {
+            newExpression = hungryExpressionCake;
+        }
+        else if (stats.petCleanliness < 30f && stats.petAge >= 3f)
+        {
+            newExpression = dirtyExpressionCake;
+        }
+        else if (stats.petAge >= 3f)
+        {
+            newExpression = happyExpressionCake;
+        }
+        else if (stats.petAge < 3f)
         {
             newExpression = happyExpression;
         }
-
+        
         if (currentExpression != newExpression)
         {
-            // Ensure only the chosen expression is active; hide all others.
             HideAllExpressionsExcept(newExpression);
 
             currentExpression = newExpression;
@@ -66,9 +91,12 @@ public class PetExpressionController : MonoBehaviour
         }
     }
 
+    /// Hides all expression GameObjects except the provided one.
     private void HideAllExpressionsExcept(GameObject keep)
     {
-        GameObject[] all = { happyExpression, sadExpression, hungryExpression, dirtyExpression, deadExpression };
+        GameObject[] all = { happyExpression, sadExpression, hungryExpression, dirtyExpression, 
+        deadExpression, happyExpressionCake, sadExpressionCake, hungryExpressionCake, 
+        dirtyExpressionCake, deadExpressionCake };
         foreach (var go in all)
         {
             if (go == null) continue;

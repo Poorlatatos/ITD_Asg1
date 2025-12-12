@@ -19,7 +19,7 @@ public class Login : MonoBehaviour
     public static Login Instance { get; private set; }
 
     [Header("UI")]
-    [SerializeField] public TMP_InputField usernameField; // new: username input
+    [SerializeField] public TMP_InputField usernameField;
     [SerializeField] public TMP_InputField emailField;
     [SerializeField] public TMP_InputField passwordField;
     [SerializeField] public TextMeshProUGUI messageText;
@@ -36,14 +36,12 @@ public class Login : MonoBehaviour
     // simple username validation: 3-24 chars, letters, digits, underscore, dash
     private static readonly Regex UsernameRegex = new Regex(@"^[a-zA-Z0-9_-]{3,24}$");
 
+    /// Initializes Firebase dependencies and registers scene load callback.
     private async void Awake()
     {
-
-        // initialize Firebase properly
         var status = await Firebase.FirebaseApp.CheckAndFixDependenciesAsync();
         if (status == Firebase.DependencyStatus.Available)
         {
-            // safe to get instances
             auth = FirebaseAuth.DefaultInstance;
             db = FirebaseDatabase.DefaultInstance.RootReference;
             Debug.Log("Firebase initialized.");
@@ -52,12 +50,12 @@ public class Login : MonoBehaviour
         {
             Debug.LogError($"Could not resolve Firebase dependencies: {status}");
             LogMsg("Database not initialized.");
-            // optionally disable login UI until fixed
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
+    /// Cleans up listeners on destroy.
     private void OnDestroy()
     {
         StopAuthListening();
@@ -65,9 +63,10 @@ public class Login : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    /// Attempts to (re)bind UI fields after a scene loads.
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (usernameField == null) usernameField = UnityEngine.Object.FindFirstObjectByType<TMP_InputField>(); // best-effort rebind
+        if (usernameField == null) usernameField = UnityEngine.Object.FindFirstObjectByType<TMP_InputField>();
         if (emailField == null) emailField = UnityEngine.Object.FindFirstObjectByType<TMP_InputField>();
         if (passwordField == null)
         {
@@ -77,6 +76,7 @@ public class Login : MonoBehaviour
         if (messageText == null) messageText = UnityEngine.Object.FindFirstObjectByType<TextMeshProUGUI>();
     }
 
+    /// Responds to Firebase auth state changes and optionally loads the next scene.
     private void OnAuthStateChanged(object sender, EventArgs e)
     {
         if (auth == null) return;
@@ -102,6 +102,7 @@ public class Login : MonoBehaviour
 
     public bool IsSignedIn => auth != null && auth.CurrentUser != null;
 
+    /// Validates inputs and initiates sign-in with provided username/email/password.
     public void OnLoginButtonPressed()
     {
         string username = usernameField ? usernameField.text.Trim() : "";
@@ -127,6 +128,7 @@ public class Login : MonoBehaviour
         SignIn(username, email, pass);
     }
 
+    /// Validates inputs and registers a new user if the username is available.
     public void OnRegisterButtonPressed()
     {
         string username = usernameField ? usernameField.text.Trim() : "";
@@ -151,7 +153,6 @@ public class Login : MonoBehaviour
             return;
         }
 
-        // check username availability, then register
         db.Child("users").Child(username).GetValueAsync().ContinueWith(t =>
         {
             if (t.IsCanceled || t.IsFaulted)
@@ -167,7 +168,6 @@ public class Login : MonoBehaviour
                 return;
             }
 
-            // username free -> create account
             auth.CreateUserWithEmailAndPasswordAsync(email, pass).ContinueWith(createTask =>
             {
                 if (createTask.IsCanceled || createTask.IsFaulted)
@@ -186,7 +186,6 @@ public class Login : MonoBehaviour
                     return;
                 }
 
-                // set display name to username
                 var profile = new UserProfile { DisplayName = username };
                 newUser.UpdateUserProfileAsync(profile).ContinueWith(updateTask =>
                 {
@@ -195,12 +194,10 @@ public class Login : MonoBehaviour
                         Debug.LogWarning("Failed to set display name: " + updateTask.Exception?.Flatten().Message);
                     }
 
-                    // store users by their UID
                     var uidKey = newUser.UserId;
                     db.Child("users").Child(uidKey).Child("username").SetValueAsync(username);
                     db.Child("users").Child(uidKey).Child("email").SetValueAsync(email);
                     db.Child("users").Child(uidKey).Child("uid").SetValueAsync(uidKey);
-                    // sign out so user must explicitly login
                     try { auth.SignOut(); } catch (Exception ex) { Debug.LogWarning("SignOut after register failed: " + ex.Message); }
 
                     user = null;
@@ -210,7 +207,7 @@ public class Login : MonoBehaviour
         }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
-    // Start/stop listening helpers
+    /// Starts listening to auth state changes.
     public void StartAuthListening()
     {
         if (auth == null) auth = FirebaseAuth.DefaultInstance;
@@ -219,6 +216,7 @@ public class Login : MonoBehaviour
         authListening = true;
     }
 
+    /// Stops listening to auth state changes.
     public void StopAuthListening()
     {
         if (!authListening || auth == null) return;
@@ -226,7 +224,7 @@ public class Login : MonoBehaviour
         authListening = false;
     }
 
-    // SignIn now checks provided username matches the account's DisplayName
+    /// Signs in with email/password and validates provided username against the account's display name when required.
     public void SignIn(string username, string email, string password)
     {
         if (auth == null) { LogMsg("Auth not initialized"); return; }
@@ -251,7 +249,7 @@ public class Login : MonoBehaviour
 
             Debug.Log($"SignIn success: uid={signedInUser.UserId} displayName='{signedInUser.DisplayName}'");
 
-            // ensure the account's displayName matches provided username if required
+            
             if (requireUsernameMatch)
             {
                 var registeredName = signedInUser.DisplayName ?? "";
@@ -266,17 +264,18 @@ public class Login : MonoBehaviour
             user = signedInUser;
             LogMsg("Login successful");
 
-            // fallback: immediately load next scene if configured (useful if auth.StateChanged didn't fire)
+            
             if (!string.IsNullOrEmpty(nextSceneName))
             {
                 Debug.Log($"Loading scene '{nextSceneName}' after sign in.");
                 SceneManager.LoadScene(nextSceneName);
                 signInRequested = false;
             }
-            // OnAuthStateChanged will still handle scene load if you rely on the auth state event
+            
         }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
+    /// Signs out the current user.
     public void SignOut()
     {
         if (auth == null) return;
@@ -286,6 +285,7 @@ public class Login : MonoBehaviour
         LogMsg("Signed out");
     }
 
+    /// Displays a temporary message in the UI or logs it to console when UI is absent.
     private IEnumerator FlashMessageCoroutine(string s, float duration)
     {
         if (messageText != null)
@@ -303,6 +303,7 @@ public class Login : MonoBehaviour
             messageText.text = "";
     }
 
+    /// Logs a message and shows it in the UI if available.
     private void LogMsg(string s, float duration = 3f)
     {
         Debug.Log(s);

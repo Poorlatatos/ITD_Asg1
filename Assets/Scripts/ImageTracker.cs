@@ -5,9 +5,9 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
 /// <summary>
-/// Name : Jaasper Lee
+/// Name : Waine Low
 /// Description : Tracks images in AR and spawns associated prefabs, with options to keep pets loaded and play jump SFX.
-/// Date : 18 November 2025
+/// Date : 9 November 2025
 /// </summary>
 public class ImageTracker : MonoBehaviour
 {
@@ -17,7 +17,6 @@ public class ImageTracker : MonoBehaviour
     [SerializeField]
     private GameObject[] placeablePrefabs;
 
-    // New: if true, keep the pet instance active in the scene when tracking is lost
     [SerializeField]
     private bool keepPetLoadedWhenLost = true;
 
@@ -40,6 +39,7 @@ public class ImageTracker : MonoBehaviour
     private Camera arCamera;
     private HashSet<Transform> jumpingObjects = new HashSet<Transform>();
 
+    /// Subscribes to tracked image changes and prepares spawned prefabs; caches the AR camera.
     private void Start()
     {
         if (trackedImageManager != null)
@@ -48,10 +48,10 @@ public class ImageTracker : MonoBehaviour
             SetupPrefabs();
         }
 
-        // cache AR camera (typically the MainCamera)
         arCamera = Camera.main;
     }
 
+    /// Instantiates and caches prefabs used for tracked images; keeps them inactive initially.
     void SetupPrefabs()
     {
         foreach (GameObject prefab in placeablePrefabs)
@@ -64,6 +64,7 @@ public class ImageTracker : MonoBehaviour
         }
     }
 
+    /// Handles added/updated/removed tracked images by updating associated instances.
     void OnImageChanged(ARTrackablesChangedEventArgs<ARTrackedImage> eventArgs)
     {
         foreach (ARTrackedImage trackedImage in eventArgs.added)
@@ -82,6 +83,7 @@ public class ImageTracker : MonoBehaviour
         }
     }
 
+    /// Updates the spawned instance state for a tracked image (attach/detach, save stats as configured).
     void UpdateImage(ARTrackedImage trackedImage)
     {
         if(trackedImage != null)
@@ -90,10 +92,8 @@ public class ImageTracker : MonoBehaviour
             var instance = spawnedPrefabs.ContainsKey(key) ? spawnedPrefabs[key] : null;
             if (trackedImage.trackingState == TrackingState.Limited || trackedImage.trackingState == TrackingState.None)
             {
-                // If configured to keep the pet loaded, detach and keep it active at the last known world pose.
                 if (keepPetLoadedWhenLost && instance != null)
                 {
-                    // Auto-save runtime stats before detaching (so we save the in-game state, not the prefab)
                     if (autoSaveOnLost)
                     {
                         var petComp = instance.GetComponentInChildren<PetStatsComponent>();
@@ -104,16 +104,12 @@ public class ImageTracker : MonoBehaviour
                         }
                     }
 
-                    // detach from trackedImage so it stays in world space
                     instance.transform.SetParent(null);
-                    // copy the last known pose so it doesn't snap elsewhere
                     instance.transform.position = trackedImage.transform.position;
                     instance.transform.rotation = trackedImage.transform.rotation;
-                    // leave active so the pet remains visible and interactive
                 }
                 else if (instance != null)
                 {
-                    // If configured to auto-save, write before disabling
                     if (autoSaveOnLost)
                     {
                         var petComp = instance.GetComponentInChildren<PetStatsComponent>();
@@ -124,7 +120,6 @@ public class ImageTracker : MonoBehaviour
                         }
                     }
 
-                    // default behaviour: disable and detach
                     instance.transform.SetParent(null);
                     instance.SetActive(false);
                 }
@@ -140,12 +135,10 @@ public class ImageTracker : MonoBehaviour
 
                     instance.SetActive(true);
 
-                    // If the spawned instance has a PetStatsComponent, request load from Firebase
                     var petComp = instance.GetComponentInChildren<PetStatsComponent>();
                     if (petComp != null && PetTracker.Instance != null)
                     {
                         PetTracker.Instance.LoadPetStatsFor(petComp);
-                        // register the runtime instance so UI/save uses the in-game data
                         PetTracker.Instance.RegisterCurrentPet(petComp);
                     }
                 }
@@ -153,22 +146,20 @@ public class ImageTracker : MonoBehaviour
         }
     }
 
-    // New: handle touch -> raycast -> jump
+    /// Detects pointer/touch and triggers jump on tapped spawned instances.
     private void Update()
     {
         if (arCamera == null) return;
 
         Vector2? screenPos = null;
 
-        // Desktop / Editor: mouse left click
-        #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_WEBGL
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_WEBGL
         if (Input.GetMouseButtonDown(0))
         {
             screenPos = Input.mousePosition;
         }
-        #endif
+#endif
 
-        // Mobile: touch
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
@@ -185,7 +176,6 @@ public class ImageTracker : MonoBehaviour
         {
             GameObject hitObj = hit.collider.gameObject;
 
-            // check if the hit object is one of our spawned prefabs or a child
             foreach (var kv in spawnedPrefabs)
             {
                 GameObject spawnedInstance = kv.Value;
@@ -200,6 +190,7 @@ public class ImageTracker : MonoBehaviour
         }
     }
 
+    /// Performs a simple jump animation for the target and increases happiness, playing SFX if applicable.
     private IEnumerator Jump(Transform target)
     {
         if (target == null) yield break;
@@ -207,15 +198,15 @@ public class ImageTracker : MonoBehaviour
 
         jumpingObjects.Add(target);
 
-        float duration = 0.5f; // total up+down time
-        float height = 0.2f;   // jump height in local units
+        float duration = 0.5f;
+        float height = 0.2f;
         Vector3 start = target.localPosition;
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            float t = elapsed / duration; // 0..1
-            float y = Mathf.Sin(t * Mathf.PI) * height; // smooth up then down
+            float t = elapsed / duration;
+            float y = Mathf.Sin(t * Mathf.PI) * height;
             target.localPosition = start + new Vector3(0f, y, 0f);
             elapsed += Time.deltaTime;
             yield return null;
@@ -223,7 +214,6 @@ public class ImageTracker : MonoBehaviour
 
         target.localPosition = start;
 
-        // Increase pet happiness if the prefab has a PetStats component
         var petComp = target.GetComponentInChildren<PetStatsComponent>();
         if (petComp != null && petComp.stats != null)
         {
@@ -232,17 +222,14 @@ public class ImageTracker : MonoBehaviour
             petComp.stats.petHappiness = newHappiness;
             Debug.Log($"Pet happiness increased to {petComp.stats.petHappiness}");
 
-            // Play a single random SFX from the list when happiness actually increases
             if (newHappiness > prevHappiness && jumpSFX != null && jumpSFX.Length > 0)
             {
                 AudioClip clip = null;
-                // choose a random non-null clip
                 for (int attempts = 0; attempts < 4; attempts++)
                 {
                     var candidate = jumpSFX[UnityEngine.Random.Range(0, jumpSFX.Length)];
                     if (candidate != null) { clip = candidate; break; }
                 }
-                // fallback to first non-null if above failed
                 if (clip == null)
                 {
                     foreach (var c in jumpSFX) { if (c != null) { clip = c; break; } }
@@ -250,7 +237,6 @@ public class ImageTracker : MonoBehaviour
 
                 if (clip != null)
                 {
-                    // play at the pet's world position as a one-shot
                     AudioSource.PlayClipAtPoint(clip, target.position, jumpSFXVolume);
                 }
             }

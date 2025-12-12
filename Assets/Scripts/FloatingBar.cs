@@ -1,6 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Name : Waine Low
+/// Description : Script to update floating bars for pet stats.
+/// Date : 13 November 2025
+/// </summary>
+
 public class FloatingBar : MonoBehaviour
 {
     [SerializeField] private Slider hungerSlider;

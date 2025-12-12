@@ -36,17 +36,17 @@ public class TimeSkip : MonoBehaviour
     private Coroutine cooldownCoroutine;
     private float lastUseTime = -Mathf.Infinity;
 
+    /// Ensures skip UI elements are hidden and attempts to auto-find the skip button.
     private void Awake()
     {
-        // ensure skipImage is hidden at start
         if (skipImage != null) skipImage.gameObject.SetActive(false);
         if (cooldownMessageText != null) cooldownMessageText.gameObject.SetActive(false);
         if (skipButton == null)
-            skipButton = GetComponent<Button>(); // try to auto-find
+            skipButton = GetComponent<Button>();
     }
+    /// Handles the time-skip button: enforces cooldown, shows visuals, and starts the skip coroutine.
     public void OnTimeSkipButtonPressed()
     {
-        // check cooldown
         float cooldownSeconds = cooldownMinutes * 60f;
         float nextAvailable = lastUseTime + cooldownSeconds;
         if (Time.time < nextAvailable)
@@ -56,13 +56,11 @@ public class TimeSkip : MonoBehaviour
             return;
         }
 
-        // mark use and start cooldown
         lastUseTime = Time.time;
         if (skipButton != null) skipButton.interactable = false;
         if (cooldownCoroutine != null) StopCoroutine(cooldownCoroutine);
         cooldownCoroutine = StartCoroutine(CooldownCoroutine(cooldownSeconds));
 
-        // Shows the image
         if (skipImage != null)
         {
             if (imageCoroutine != null) StopCoroutine(imageCoroutine);
@@ -72,19 +70,19 @@ public class TimeSkip : MonoBehaviour
         StartCoroutine(DoTimeSkip());
     }
 
+    /// Shows the skip image for a short duration.
     private IEnumerator ShowSkipImageCoroutine()
     {
         if (skipImage == null) yield break;
         skipImage.gameObject.SetActive(true);
         yield return new WaitForSeconds(imageDisplaySeconds);
-        // Hide if still assigned
         if (skipImage != null) skipImage.gameObject.SetActive(false);
         imageCoroutine = null;
     }
 
+    /// Applies the time-skip effects to the active pet: reduces stats, applies age boost, and optionally saves.
     private IEnumerator DoTimeSkip()
     {
-        // Finds the active pet that in currently in the scene
         PetStatsComponent pet = null;
         if (PetTracker.Instance != null && PetTracker.Instance.CurrentPet != null)
             pet = PetTracker.Instance.CurrentPet;
@@ -97,24 +95,19 @@ public class TimeSkip : MonoBehaviour
             yield break;
         }
 
-        // Pause pet routines briefly to avoid double-applying ticks
         pet.PauseForSeconds(pauseDuration);
 
-        // Compute random percent reduction between minPercent and maxPercent
         float percent = Random.Range(minPercent, maxPercent) * 0.01f;
 
-        // Apply reduction to each stat
         pet.stats.petHunger = Mathf.Clamp(pet.stats.petHunger * (1f - percent), 0f, 100f);
         pet.stats.petHappiness = Mathf.Clamp(pet.stats.petHappiness * (1f - percent), 0f, 100f);
         pet.stats.petCleanliness = Mathf.Clamp(pet.stats.petCleanliness * (1f - percent), 0f, 100f);
 
         Debug.Log($"TimeSkip: skipped {hoursToSkip} hours. Stats reduced by {percent*100f:0.##}%");
 
-        // Gives a small aging speed boost for sleeping
         float sleepBoostPercent = 0.5f;
         pet.ApplySleepAgeBoost(sleepBoostPercent);
 
-        // Saves stats after skip
         if (autoSaveAfterSkip && PetTracker.Instance != null)
         {
             PetTracker.Instance.SavePetStats(pet.stats);
@@ -124,6 +117,7 @@ public class TimeSkip : MonoBehaviour
         yield return new WaitForSeconds(pauseDuration);
     }
 
+    /// Manages the cooldown period for the time-skip ability.
     private IEnumerator CooldownCoroutine(float seconds)
     {
         float end = Time.time + seconds;

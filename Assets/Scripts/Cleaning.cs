@@ -2,27 +2,31 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+
+/// Name : Jaasper Lee
+/// Description : Script to allow user to clean their pet by rubbing on the screen.
+/// Date : 17 November 2025
+
+
 public class Cleaning : MonoBehaviour
 {
     [Header("Brush UI")]
-    public Sprite brushSprite; // assign a brush image in Inspector
+    public Sprite brushSprite;
     public Vector2 brushSize = new Vector2(64, 64);
 
     [Header("Cleaning")]
-    public float cleanlinessPerSecond = 30f; // base cleaning rate
-    public float minWorldMovement = 0.002f; // world units movement required to count as a rub
-    public float movementScale = 0.03f; // scale factor for how movement maps to cleaning
+    public float cleanlinessPerSecond = 30f;
+    public float minWorldMovement = 0.002f;
+    public float movementScale = 0.03f;
 
     private Canvas runtimeCanvas;
     private Image brushImage;
     private Camera mainCam;
 
-    // tracking state
     private bool pointerDown = false;
     private Vector3 lastWorldPos;
     private bool lastWorldValid = false;
 
-    // NEW: only active when toggled by UI button
     [Header("Activation")]
     [Tooltip("When true the user may press/touch and rub to clean. Toggle with ToggleCleaning()")]
     public bool cleaningEnabled = false;
@@ -34,13 +38,13 @@ public class Cleaning : MonoBehaviour
         HideBrush();
     }
 
+    /// Initializes the main camera, ensures the UI canvas and brush image exist, and hides the brush.
     private void EnsureCanvasAndImage()
     {
-        // find an existing overlay canvas first
+        
         runtimeCanvas = FindFirstObjectByType<Canvas>();
         if (runtimeCanvas == null || runtimeCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
         {
-            // create a simple overlay canvas
             GameObject cgo = new GameObject("BrushCanvas");
             runtimeCanvas = cgo.AddComponent<Canvas>();
             runtimeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -48,8 +52,8 @@ public class Cleaning : MonoBehaviour
             cgo.AddComponent<GraphicRaycaster>();
             DontDestroyOnLoad(cgo);
         }
-
-        // create brush image
+        
+        /// Creates the brush UI image as a child of the runtime canvas and configures it for pointer feedback.
         GameObject igo = new GameObject("BrushImage");
         igo.transform.SetParent(runtimeCanvas.transform, false);
         brushImage = igo.AddComponent<Image>();
@@ -59,13 +63,13 @@ public class Cleaning : MonoBehaviour
         brushImage.enabled = false;
     }
 
+    /// Handles input each frame; shows/hides the brush and triggers cleaning when enabled.
     private void Update()
     {
         Vector2? screenPos = null;
 
         if (!cleaningEnabled)
         {
-            // ensure nothing is active while cleaning is disabled
             if (pointerDown) pointerDown = false;
             HideBrush();
             lastWorldValid = false;
@@ -93,23 +97,27 @@ public class Cleaning : MonoBehaviour
         }
     }
 
+    /// Positions the on-screen brush image at the given screen coordinates.
     private void UpdateBrushPosition(Vector2 screenPos)
     {
         if (brushImage == null) return;
-        // position UI image under pointer
         brushImage.rectTransform.position = screenPos;
     }
 
+    /// Enables the brush UI image.
     private void ShowBrush()
     {
         if (brushImage != null) brushImage.enabled = true;
     }
 
+    /// Disables the brush UI image.
     private void HideBrush()
     {
         if (brushImage != null) brushImage.enabled = false;
     }
 
+    
+    /// Performs a raycast at the given screen position and applies cleanliness to any hit pet based on pointer movement.
     private void TryCleanAt(Vector2 screenPos)
     {
         if (mainCam == null) return;
@@ -117,7 +125,6 @@ public class Cleaning : MonoBehaviour
         Ray ray = mainCam.ScreenPointToRay(screenPos);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f))
         {
-            // check if we hit a pet (or child of pet)
             var petComp = hit.collider.GetComponentInParent<PetStatsComponent>();
             if (petComp != null && petComp.stats != null)
             {
@@ -133,27 +140,23 @@ public class Cleaning : MonoBehaviour
                 float delta = Vector3.Distance(worldPos, lastWorldPos);
                 if (delta >= minWorldMovement)
                 {
-                    // map movement to a cleaning amount
                     float cleanAmount = cleanlinessPerSecond * (delta / movementScale) * Time.deltaTime;
                     petComp.stats.petCleanliness = Mathf.Clamp(petComp.stats.petCleanliness + cleanAmount, 0f, 100f);
 
-                    // ensure PetTracker knows this runtime pet so UI updates
                     if (PetTracker.Instance != null)
                         PetTracker.Instance.RegisterCurrentPet(petComp);
 
-                    // update lastWorldPos for continuous rubbing
                     lastWorldPos = worldPos;
                 }
             }
         }
         else
         {
-            // no hit -> invalidate last world pos so next hit starts fresh
             lastWorldValid = false;
         }
     }
 
-    // NEW public toggle methods for UI button
+    /// Toggles the cleaning interaction and updates brush/pointer state accordingly.
     public void ToggleCleaning()
     {
         cleaningEnabled = !cleaningEnabled;
@@ -170,12 +173,17 @@ public class Cleaning : MonoBehaviour
         }
     }
 
+    
+
+    /// Enables cleaning mode and shows the brush.
     public void StartCleaning()
     {
         cleaningEnabled = true;
         ShowBrush();
     }
 
+    
+    /// Disables cleaning mode, resets pointer state, and hides the brush.
     public void StopCleaning()
     {
         cleaningEnabled = false;
